@@ -1,5 +1,6 @@
 package comparators;
 
+import users.Student;
 import java.util.Comparator;
 
 public class StudentGpaComparator implements Comparator<Student> {
