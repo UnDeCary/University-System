@@ -6,6 +6,6 @@ import java.util.Comparator;
 public class PaperDateComparator implements Comparator<ResearchPaper> {
     @Override
     public int compare(ResearchPaper p1, ResearchPaper p2) {
-        return p2.getDate().compareTo(p1.getDate()); // DESC, новые сначала
+        return p2.getDate().compareTo(p1.getDate());
     }
 }
