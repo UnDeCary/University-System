@@ -55,4 +55,5 @@ public class ResearchPaper implements Comparable<ResearchPaper>, Serializable {
     public int getCitations() { return citations; }
     public Date getDate() { return date; }
     public String getTitle() { return title; }
+    public void addCitation() { this.citations++; }
 }

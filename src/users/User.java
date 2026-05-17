@@ -1,8 +1,18 @@
+package users;
+
+import java.io.Serializable;
 import java.util.Objects;
 
-import enums.Language;
+import communications.Message;
+import research.Journal;
+import research.ResearchPaper;
+import research.Subsriber;
+import java.util.Set;
 
-public abstract class User {
+import enums.Language;
+import research.Subsriber;
+
+public abstract class User implements Serializable, Subsriber {
     private String id;
     private String firstName;
     private String lastName;
@@ -10,27 +20,21 @@ public abstract class User {
     private String password;
     private Language language;
 
-    public User(String id, String firstName, String lastName, String email, String password, Language language) {
+    public User(String id, String firstName, String lastName, String email, String password) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
-        this.language = language;
+        this.language = Language.EN;
     }
 
-    public abstract boolean login();
-
-    public abstract void logout();
-
-    public abstract void sendMessage(User to, String text);
-
-    public void switchLanguage(Language lang) {
-        this.language = lang;
-    }
-
-    public void changePassword(String newPassword) {
-        this.password = newPassword;
+    public  boolean login(String email, String password){
+        boolean ok = this.email.equals(email) && PasswordEncoder.matches(this.password, password);
+        if (ok) {
+            System.out.println(firstName + " " + lastName + " logged in.");
+        }
+        return ok;
     }
 
     @Override
@@ -57,14 +61,38 @@ public abstract class User {
         return Objects.hash(id);
     }
 
+
+    public void sendMessage(User to, String text) {
+        Message m = new Message(this, to, text);
+        m.send();
+    }
+
+    public void switchLanguage(Language lang) {
+        this.language = lang;
+        System.out.println("Language switched to " + lang);
+    }
+
+    public void changePassword(String newPassword) {
+        this.password = newPassword;
+    }
+
+    // Observer: реакция на новую статью в журнале, на который подписан
+    @Override
+    public void update(Journal j, ResearchPaper p) {
+        System.out.println("[Notification to " + firstName + "] New paper in '"
+                + j.getName() + "': " + p.getTitle());
+    }
+
+    // Геттеры/сеттеры
     public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
     public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
     public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
     public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
     public String getPassword() { return password; }
     public Language getLanguage() { return language; }
+
+    public String getFullName() { return firstName + " " + lastName; }
+
+
+
 }

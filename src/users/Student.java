@@ -1,21 +1,19 @@
 package users;
 
+import enums.DegreeType;
+import exceptions.CreditLimitException;
+import exceptions.MaxFailException;
+import university.Course;
+import university.Mark;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import users.User;
-
-import services.Admin;
-import services.Manager;
-import services.Teacher;
-import services.TechSupportSpecialist;
-
-import university.Course;
-import university.Mark;
-
 
 public class Student extends User {
+    public static final int MAX_CREDITS = 21;
+    public static final int MAX_FAILS = 3;
 
     private String studentId;
     private double gpa;
@@ -25,8 +23,9 @@ public class Student extends User {
     private int failCount;
     private StudentOrganization organization;
 
-    public Student(String id, String firstName, String lastName, String email, String password, Language language, String studentId) {
-        super(id, firstName, lastName, email, password, language);
+    public Student(String id, String firstName, String lastName,
+                   String email, String password, String studentId) {
+        super(id, firstName, lastName, email, password);
         this.studentId = studentId;
         this.gpa = 0.0;
         this.credits = 0;
@@ -36,60 +35,91 @@ public class Student extends User {
         this.organization = null;
     }
 
-    @Override
-    public boolean login() {
-        System.out.println("Student " + getFirstName() + " logged in.");
-        return true;
-    }
-
-    @Override
-    public void logout() {
-        System.out.println("Student " + getFirstName() + " logged out.");
-    }
-
-    @Override
-    public void sendMessage(User to, String text) {
-        System.out.println("Message from " + getFirstName() + " to " + to.getFirstName() + ": " + text);
-    }
-
-    public void registerCourse(Course c) {
+    public void registerCourse(Course c) throws CreditLimitException, MaxFailException {
+        if (this.credits + c.getCredits() > MAX_CREDITS) {
+            throw new CreditLimitException(
+                    "Cannot register: credit limit (" + MAX_CREDITS + ") exceeded.");
+        }
+        if (this.failCount >= MAX_FAILS) {
+            throw new MaxFailException(
+                    "Cannot register: student has already failed " + failCount + " times.");
+        }
         if (!courses.contains(c)) {
             courses.add(c);
+            this.credits += c.getCredits();
+            c.enrollStudent(this);
+            System.out.println(getFullName() + " registered for course: " + c.getName());
         }
     }
 
     public List<Course> viewCourses() {
-        return this.courses;
+        return courses;
     }
 
     public Map<Course, Mark> viewMarks() {
-        return this.marks;
+        return marks;
     }
 
     public String getTranscript() {
-        return "Transcript for " + getFirstName() + " " + getLastName() + "\nGPA: " + gpa;
+        StringBuilder sb = new StringBuilder();
+        sb.append("===== Transcript of ").append(getFullName()).append(" =====\n");
+        sb.append("Student ID: ").append(studentId).append("\n");
+        sb.append("GPA: ").append(gpa).append("\n");
+        sb.append("Credits: ").append(credits).append("\n\n");
+        for (Map.Entry<Course, Mark> e : marks.entrySet()) {
+            sb.append(e.getKey().getName())
+                    .append(" — ")
+                    .append(e.getValue().getGrade())
+                    .append(" (")
+                    .append(e.getValue().getTotal())
+                    .append(")\n");
+        }
+        return sb.toString();
     }
 
     public void rateTeacher(Teacher t, double rating) {
-        System.out.println("Rated teacher " + t.getName() + " with " + rating);
+        t.addRating(rating);
+        System.out.println(getFullName() + " rated " + t.getFullName() + " with " + rating);
     }
 
     public String viewTeacherInfo(Teacher t) {
-        return "Info about teacher: " + t.getName();
+        return "Teacher: " + t.getFullName()
+                + ", position: " + t.getPosition()
+                + ", rating: " + t.getRating();
     }
 
     public void joinOrganization(StudentOrganization org) {
         this.organization = org;
-        System.out.println(getFirstName() + " joined " + org.getName());
+        org.addMember(this);
+    }
+
+    public void addMark(Course c, Mark m) {
+        marks.put(c, m);
+        recalculateGpa();
+        if (m.isFailed()) {
+            failCount++;
+        }
+    }
+
+    private void recalculateGpa() {
+        if (marks.isEmpty()) { gpa = 0; return; }
+        double sum = 0;
+        for (Mark m : marks.values()) sum += m.getTotal();
+        gpa = sum / marks.size() / 25.0; // приводим к шкале 0-4
+    }
+
+    // Можно ли быть researcher автоматически (Master/PhD — да)
+    public boolean isMandatoryResearcher() {
+        if (this instanceof GraduateStudent) {
+            DegreeType d = ((GraduateStudent) this).getDegree();
+            return d == DegreeType.MASTER || d == DegreeType.PHD;
+        }
+        return false;
     }
 
     public String getStudentId() { return studentId; }
-    public void setStudentId(String studentId) { this.studentId = studentId; }
     public double getGpa() { return gpa; }
-    public void setGpa(double gpa) { this.gpa = gpa; }
     public int getCredits() { return credits; }
-    public void setCredits(int credits) { this.credits = credits; }
     public int getFailCount() { return failCount; }
-    public void setFailCount(int failCount) { this.failCount = failCount; }
     public StudentOrganization getOrganization() { return organization; }
 }
