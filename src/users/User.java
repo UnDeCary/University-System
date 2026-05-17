@@ -7,10 +7,8 @@ import communications.Message;
 import research.Journal;
 import research.ResearchPaper;
 import research.Subsriber;
-import java.util.Set;
 
 import enums.Language;
-import research.Subsriber;
 
 public abstract class User implements Serializable, Subsriber {
     private String id;

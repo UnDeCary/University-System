@@ -4,7 +4,7 @@ import complaints.BaseComplaint;
 import complaints.UrgencyDecorator;
 import enums.TeacherPosition;
 import enums.Urgency;
-import research.RecommendationLetter;
+import communications.RecommendationLetter;
 import storage.DataStorage;
 import university.Course;
 import university.Mark;
